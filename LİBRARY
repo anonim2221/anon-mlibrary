@@ -1,3 +1,7 @@
+
+
+
+
 local Library = {}
 local TS = game:GetService("TweenService")
 local UIS = game:GetService("UserInputService")
@@ -1520,8 +1524,8 @@ function Library:CreateWindow(Settings)
 
     local VP = workspace.CurrentCamera.ViewportSize
     local IsMobile = UIS.TouchEnabled and (VP.X < 850 or VP.Y < 600)
-    local WindowSizeX = IsMobile and math.clamp(VP.X - 40, 300, 780) or 780
-    local WindowSizeY = IsMobile and math.clamp(VP.Y - 40, 200, 540) or 540
+    local WindowSizeX = IsMobile and math.clamp(VP.X - 32, 280, 660) or 660
+    local WindowSizeY = IsMobile and math.clamp(VP.Y - 32, 320, 705) or 705
     local WindowSize = UDim2.fromOffset(WindowSizeX, WindowSizeY)
 
     local WindowContainer = Create("Frame", {
