@@ -2649,12 +2649,13 @@ function Library:CreateWindow(Settings)
                 Library.Items[Flag] = {Set = Update}
             end
 
-            function Elements:CreateDropdown(Cfg)
+function Elements:CreateDropdown(Cfg)
                 ElementOrder = ElementOrder + 1
                 local Flag = Cfg.Flag or Cfg.Name
                 local Expanded = false
                 local Selected = Cfg.Default
                 local Options = Cfg.Items or {}
+                local PlayerIcons = Cfg.PlayerIcons == true -- Oyuncu profil desteği
                 
                 local Drop = Create("TextButton", {
                     Parent = TargetParent,
@@ -2715,8 +2716,8 @@ function Library:CreateWindow(Settings)
                     Parent = Container,
                     PaddingTop = UDim.new(0, 5),
                     PaddingBottom = UDim.new(0, 5),
-                    PaddingLeft = UDim.new(0, 10),
-                    PaddingRight = UDim.new(0, 10)
+                    PaddingLeft = UDim.new(0, 8),
+                    PaddingRight = UDim.new(0, 8)
                 })
                 
                 local ListLayout = Create("UIListLayout", { Parent = Container, Padding = UDim.new(0, 4) })
@@ -2754,13 +2755,16 @@ function Library:CreateWindow(Settings)
                     end
 
                     for _, item in pairs(Options) do
+                        local itemText = tostring(item)
+                        local itemHeight = PlayerIcons and 30 or 28
+
                         local Btn = Create("TextButton", {
                             Parent = Container,
-                            Size = UDim2.new(1, 0, 0, 28),
+                            Size = UDim2.new(1, 0, 0, itemHeight),
                             Position = UDim2.new(0, 0, 0, 0),
                             BackgroundColor3 = SelectedTheme.Main,
                             BackgroundTransparency = 0.8,
-                            Text = tostring(item),
+                            Text = PlayerIcons and "" or itemText,
                             Font = Library.GlobalFont,
                             TextColor3 = SelectedTheme.TextDark,
                             TextSize = 13,
@@ -2772,16 +2776,68 @@ function Library:CreateWindow(Settings)
                         AddCorner(Btn, 6)
                         table.insert(Library.ThemeObjects.TextDark, Btn)
 
+                        local ItemLabel = nil
+
+                        if PlayerIcons then
+                            local AvatarImg = Create("ImageLabel", {
+                                Parent = Btn,
+                                Size = UDim2.new(0, 22, 0, 22),
+                                Position = UDim2.new(0, 4, 0.5, -11),
+                                BackgroundTransparency = 1,
+                                Image = "rbxasset://textures/ui/GuiImagePlaceholder.png",
+                                ZIndex = 10
+                            })
+                            AddCorner(AvatarImg, 100)
+
+                            ItemLabel = Create("TextLabel", {
+                                Parent = Btn,
+                                Size = UDim2.new(1, -34, 1, 0),
+                                Position = UDim2.new(0, 32, 0, 0),
+                                BackgroundTransparency = 1,
+                                Text = itemText,
+                                Font = Library.GlobalFont,
+                                TextColor3 = SelectedTheme.TextDark,
+                                TextSize = 12,
+                                TextXAlignment = Enum.TextXAlignment.Left,
+                                TextTruncate = Enum.TextTruncate.AtEnd,
+                                ZIndex = 10,
+                                ThemeTag = "TextDark"
+                            })
+                            table.insert(Library.ThemeObjects.TextDark, ItemLabel)
+
+                            -- @KullaniciAdi kalıbından kullanıcıyı yakala ve avatarını asenkron yükle
+                            local uName = itemText:match("@([%w_]+)")
+                            if uName then
+                                task.spawn(function()
+                                    local targetPlr = Plrs:FindFirstChild(uName)
+                                    local userId = targetPlr and targetPlr.UserId
+                                    if not userId then
+                                        pcall(function() userId = Plrs:GetUserIdFromNameAsync(uName) end)
+                                    end
+                                    if userId and AvatarImg.Parent then
+                                        local thumb = Plrs:GetUserThumbnailAsync(userId, Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size48x48)
+                                        AvatarImg.Image = thumb
+                                    end
+                                end)
+                            end
+                        end
+
                         local hoverTweenBtn, leaveTweenBtn
                         Btn.MouseEnter:Connect(function()
                             if leaveTweenBtn then leaveTweenBtn:Cancel() end
                             hoverTweenBtn = TS:Create(Btn, TweenInfo.new(0.2), {BackgroundTransparency = 0.2, TextColor3 = SelectedTheme.Text})
                             hoverTweenBtn:Play()
+                            if ItemLabel then
+                                ItemLabel.TextColor3 = SelectedTheme.Text
+                            end
                         end)
                         Btn.MouseLeave:Connect(function()
                             if hoverTweenBtn then hoverTweenBtn:Cancel() end
                             leaveTweenBtn = TS:Create(Btn, TweenInfo.new(0.2), {BackgroundTransparency = 0.8, TextColor3 = SelectedTheme.TextDark})
                             leaveTweenBtn:Play()
+                            if ItemLabel then
+                                ItemLabel.TextColor3 = SelectedTheme.TextDark
+                            end
                         end)
                         Btn.MouseButton1Click:Connect(function()
                             Update(item)
@@ -2790,7 +2846,8 @@ function Library:CreateWindow(Settings)
                             TS:Create(Arrow, TweenInfo.new(0.4, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {Rotation = 0}):Play()
                         end)
                     end
-                    Container.CanvasSize = UDim2.new(0, 0, 0, #Options * 32 + 10)
+                    local stepH = PlayerIcons and 34 or 32
+                    Container.CanvasSize = UDim2.new(0, 0, 0, #Options * stepH + 10)
                 end
                 
                 RefreshList(Options)
@@ -2804,7 +2861,8 @@ function Library:CreateWindow(Settings)
                         RefreshList(Cfg.UpdateList())
                     end
                     Expanded = not Expanded
-                    local H = Expanded and math.min(#Options * 32 + 44, 180) or 34
+                    local stepH = PlayerIcons and 34 or 32
+                    local H = Expanded and math.min(#Options * stepH + 44, 200) or 34
                     TS:Create(Drop, TweenInfo.new(0.4, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {Size = UDim2.new(1, 0, 0, H)}):Play()
                     TS:Create(Arrow, TweenInfo.new(0.4, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {Rotation = Expanded and 180 or 0}):Play()
                     TS:Create(Container, TweenInfo.new(0.4, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {Size = UDim2.new(1, 0, 1, -34)}):Play()
