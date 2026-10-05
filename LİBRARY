@@ -2208,6 +2208,53 @@ function Library:CreateWindow(Settings)
                 Create("UIPadding", { Parent = Lab, PaddingLeft = UDim.new(0, 6) })
             end
 
+                function Elements:CreateLabel(Cfg)
+                ElementOrder = ElementOrder + 1
+                local hasIcon = (Cfg.Icon ~= nil and Cfg.Icon ~= "")
+                
+                local Frame = Create("Frame", {
+                    Parent = TargetParent,
+                    Size = UDim2.new(1, 0, 0, hasIcon and 46 or 30),
+                    BackgroundColor3 = SelectedTheme.Second,
+                    BackgroundTransparency = 0.5,
+                    BorderSizePixel = 0,
+                    LayoutOrder = ElementOrder,
+                    ZIndex = 7,
+                    ThemeTag = "Second"
+                })
+                AddCorner(Frame, 8)
+                AddStroke(Frame, SelectedTheme).Transparency = 0.8
+
+                local textOffset = 10
+                if hasIcon then
+                    local Icon = Create("ImageLabel", {
+                        Parent = Frame,
+                        Size = UDim2.new(0, 32, 0, 32),
+                        Position = UDim2.new(0, 7, 0.5, -16),
+                        BackgroundTransparency = 1,
+                        Image = Cfg.Icon,
+                        ZIndex = 8
+                    })
+                    AddCorner(Icon, 100) -- Yuvarlak profil resmi
+                    textOffset = 46
+                end
+
+                Create("TextLabel", {
+                    Parent = Frame,
+                    Size = UDim2.new(1, -(textOffset + 10), 1, 0),
+                    Position = UDim2.new(0, textOffset, 0, 0),
+                    BackgroundTransparency = 1,
+                    Text = Cfg.Text or "",
+                    Font = Library.GlobalFontBold,
+                    TextColor3 = SelectedTheme.Text,
+                    TextSize = 13,
+                    TextXAlignment = Enum.TextXAlignment.Left,
+                    ZIndex = 8,
+                    ThemeTag = "Text"
+                })
+                return Frame
+            end
+
             function Elements:CreateParagraph(Cfg)
                 ElementOrder = ElementOrder + 1
                 Cfg = Cfg or {}
