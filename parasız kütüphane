@@ -569,7 +569,7 @@ local function UpdateThemeObjects()
             else 
                 tab.Label.TextColor3 = Themes.Default.TextDark 
                 if tab.Icon then
-                    tab.Icon.ImageColor3 = Themes.Default.TextDark
+                    tab.Icon.ImageColor3 = Themes.Default.ElementAccent
                 end
             end
         else
@@ -636,19 +636,14 @@ local function CreateDropShadow(parent, blurRadius, opacity)
 end
 
 local function AddStroke(instance, theme)
+    -- Astra tarzi: duz gri cizgi (gradient yok)
     local stroke = Create("UIStroke", {
-        Color = Color3.new(1, 1, 1),
-        Thickness = 1.2,
+        Color = Color3.fromRGB(110, 110, 110),
+        Thickness = 1,
         Transparency = 0.5,
         ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
         Parent = instance
     })
-    local gradient = Create("UIGradient", {
-        Color = theme.Gradient,
-        Rotation = 45,
-        Parent = stroke
-    })
-    table.insert(Library.GradientObjects, gradient)
     return stroke
 end
 
@@ -815,6 +810,92 @@ local function AttachHorizontalScroll(box, scrollingFrame, defaultAlignment)
             end
         end
     end)
+end
+
+-- =========================================================================
+-- ASTRA STYLE: LUCIDE ICON SET (sprite sheet, no HttpGet needed)
+-- =========================================================================
+local LucideIcons = {
+    ["search"] = {16898613699, 918, 857},
+    ["move"] = {16898613613, 453, 820},
+    ["move-diagonal-2"] = {16898613613, 967, 49},
+    ["chevron-down"] = {16898612819, 196, 918},
+    ["home"] = {16898613509, 820, 147},
+    ["house"] = {16898613509, 820, 147},
+    ["user"] = {16898613869, 661, 869},
+    ["users"] = {16898613869, 967, 98},
+    ["circle-user"] = {16898613044, 869, 257},
+    ["hand"] = {16898613509, 563, 820},
+    ["grab"] = {16898613509, 514, 820},
+    ["shield"] = {16898613777, 869, 0},
+    ["swords"] = {16898613777, 967, 759},
+    ["sparkles"] = {16898613777, 918, 49},
+    ["server"] = {16898613777, 771, 0},
+    ["shirt"] = {16898613777, 98, 771},
+    ["eye"] = {16898613353, 771, 563},
+    ["keyboard"] = {16898613509, 453, 820},
+    ["settings"] = {16898613777, 771, 257},
+    ["heart"] = {16898613509, 661, 771},
+    ["star"] = {16898613777, 967, 147},
+    ["info"] = {16898613509, 612, 869},
+    ["monitor"] = {16898613613, 404, 820},
+    ["crosshair"] = {16898613044, 453, 869},
+    ["target"] = {16898613869, 514, 771},
+    ["box"] = {16898612819, 771, 196},
+    ["package"] = {16898613613, 918, 196},
+    ["layers"] = {16898613509, 98, 967},
+    ["globe"] = {16898613509, 771, 563},
+    ["earth"] = {16898613353, 0, 771},
+    ["anchor"] = {16898612629, 306, 869},
+    ["bell"] = {16898612819, 820, 257},
+    ["plus"] = {16898613699, 257, 918},
+    ["x"] = {16898613869, 869, 906},
+    ["zap"] = {16898613869, 918, 906},
+    ["gamepad-2"] = {16898613353, 710, 967},
+    ["wrench"] = {16898613869, 820, 906},
+    ["bomb"] = {16898612819, 257, 869},
+    ["skull"] = {16898613777, 49, 869},
+    ["radar"] = {16898613699, 820, 404},
+    ["mountain"] = {16898613613, 869, 612},
+    ["cloud-sun"] = {16898613044, 0, 967},
+}
+Library.LucideIcons = LucideIcons
+Library.SliderRounding = true -- CreateSlider: Cfg.Rounding destegi
+Library.DropdownMulti = true -- CreateDropdown: Cfg.Multi destegi
+
+-- Tab ismine gore otomatik Astra ikonlari (CreateTab'e lucide ismi de verilebilir)
+local AstraTabIcons = {
+    updates = "home", home = "home", fight = "swords", main = "zap",
+    defense = "shield", target = "crosshair", grab = "hand", player = "user",
+    server = "server", toys = "package", toy = "package", misc = "wrench",
+    figure = "shirt", figures = "shirt", keybinds = "keyboard", visuals = "eye",
+    anchor = "anchor", world = "globe", aura = "sparkles", auras = "sparkles",
+    settings = "settings", credits = "heart",
+}
+
+local function GetLucide(name)
+    if type(name) ~= "string" then return nil end
+    local d = LucideIcons[string.lower(name)]
+    if not d then return nil end
+    return {
+        Image = "rbxassetid://" .. d[1],
+        Offset = Vector2.new(d[2], d[3]),
+        Size = Vector2.new(48, 48)
+    }
+end
+
+local function ApplyIcon(img, icon)
+    local l = GetLucide(icon)
+    if l then
+        img.Image = l.Image
+        img.ImageRectOffset = l.Offset
+        img.ImageRectSize = l.Size
+        return true
+    end
+    img.ImageRectOffset = Vector2.new(0, 0)
+    img.ImageRectSize = Vector2.new(0, 0)
+    SetImageAsync(img, "Image", icon)
+    return false
 end
 
 function Library:KeySystem(Settings)
@@ -1076,6 +1157,20 @@ function Library:CreateWindow(Settings)
     local Config = Settings or {}
     local Title = Config.Title or "UI"
     local SelectedTheme = GetTheme(Config.Theme)
+
+    -- ===== ASTRA PALETI: notr siyah zemin + gri cizgiler, accent (turkuaz) korunur =====
+    Library.Style = {
+        Background = Color3.fromRGB(12, 12, 12),
+        Panel = Color3.fromRGB(16, 16, 16),
+        Element = Color3.fromRGB(25, 25, 25),
+        Outline = Color3.fromRGB(40, 40, 40),
+        Icon = Color3.fromRGB(150, 150, 150)
+    }
+    if Config.AstraColors ~= false then
+        SelectedTheme.Main = Library.Style.Background
+        SelectedTheme.Second = Library.Style.Element
+        SelectedTheme.TextDark = Color3.fromRGB(150, 150, 150)
+    end
     
     Library.GlobalCornerValue = Config.CornerRadius or SelectedTheme.CornerRadius or 10
 
@@ -1534,25 +1629,48 @@ function Library:CreateWindow(Settings)
             end)
         end)
     end
+    -- =====================================================================
+    -- ASTRA STYLE WINDOW SHELL (logo + search ust bar, ikon sidebar, footer)
+    -- =====================================================================
+    local Style = Library.Style
+
     local VP = workspace.CurrentCamera.ViewportSize
     local IsMobile = UIS.TouchEnabled and (VP.X < 850 or VP.Y < 600)
-    local WindowSizeX = IsMobile and math.clamp(VP.X - 32, 280, 660) or 660
-    local WindowSizeY = IsMobile and math.clamp(VP.Y - 32, 320, 705) or 705
+    local WindowSizeX = IsMobile and math.clamp(VP.X - 32, 280, 760) or 760
+    local WindowSizeY = IsMobile and math.clamp(VP.Y - 32, 300, 680) or 680
     local WindowSize = UDim2.fromOffset(WindowSizeX, WindowSizeY)
+
+    local TOPBAR_H = 48
+    local FOOTER_H = 22
+    local TAB_H = 32
+    SidebarWidth = CompactSidebar and 52 or 170
 
     local WindowContainer = Create("Frame", {
         Name = "WindowContainer",
         Parent = ScreenGui,
-        Size = UDim2.fromOffset(0, 0),
+        Size = WindowSize,
         Position = UDim2.fromScale(0.5, 0.5),
         AnchorPoint = Vector2.new(0.5, 0.5),
         BackgroundTransparency = 1,
         ZIndex = 1
     })
-    
+
+    -- Acilis/kapanis fade animasyonu icin CanvasGroup (sadece animasyon sirasinda kullanilir)
+    local FadeGroup
+    pcall(function()
+        FadeGroup = Instance.new("CanvasGroup")
+        FadeGroup.Name = "FadeGroup"
+        FadeGroup.Size = UDim2.fromScale(1, 1)
+        FadeGroup.BackgroundTransparency = 1
+        FadeGroup.BorderSizePixel = 0
+        FadeGroup.GroupTransparency = 1
+        FadeGroup.ZIndex = 2
+        FadeGroup.Parent = WindowContainer
+    end)
+
     local Main = Create("Frame", {
         Name = "Main",
-        Parent = WindowContainer,
+        Parent = FadeGroup or WindowContainer,
         Size = UDim2.fromScale(1, 1),
         BackgroundColor3 = SelectedTheme.Main,
         BackgroundTransparency = 1,
@@ -1560,9 +1678,9 @@ function Library:CreateWindow(Settings)
         ClipsDescendants = true,
         ZIndex = 2
     })
-    
-    local Shadow1 = CreateDropShadow(WindowContainer, 120, 0.35)
-    local Shadow2 = CreateDropShadow(WindowContainer, 35, 0.4) 
+
+    local Shadow1 = CreateDropShadow(WindowContainer, 60, 0.55)
+    local Shadow2 = CreateDropShadow(WindowContainer, 18, 0.6)
     Shadow1.ImageTransparency = 1
     Shadow2.ImageTransparency = 1
 
@@ -1575,8 +1693,8 @@ function Library:CreateWindow(Settings)
         ZIndex = 1
     })
     SetImageAsync(MainBgImage, "Image", SelectedTheme.Background)
-    AddCorner(MainBgImage, 12)
-    
+    AddCorner(MainBgImage, 10)
+
     local MainBgColor = Create("Frame", {
         Parent = Main,
         Size = UDim2.fromScale(1, 1),
@@ -1585,277 +1703,763 @@ function Library:CreateWindow(Settings)
         ZIndex = 2,
         ThemeTag = "Main"
     })
-    AddCorner(MainBgColor, 12)
+    AddCorner(MainBgColor, 10)
 
-    local OrbContainer = AddSoftOrbs(Main, SelectedTheme) 
-    
-    AddCorner(Main, 12)
-    AddStroke(Main, SelectedTheme)
-    
-    TS:Create(WindowContainer, TweenInfo.new(0.7, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {Size = WindowSize}):Play()
-    TS:Create(Shadow1, TweenInfo.new(0.7), {ImageTransparency = 0.35}):Play()
-    TS:Create(Shadow2, TweenInfo.new(0.7), {ImageTransparency = 0.4}):Play()
+    local OrbContainer = AddSoftOrbs(Main, SelectedTheme)
 
-    local ResizeBtn = Create("TextButton", {
+    AddCorner(Main, 10)
+    Create("UIStroke", {
         Parent = Main,
-        Size = UDim2.fromOffset(25, 25),
-        Position = UDim2.new(1, 0, 1, 0),
-        AnchorPoint = Vector2.new(1, 1),
-        BackgroundTransparency = 1,
-        Text = "◢",
-        Font = Library.GlobalFont,
-        TextColor3 = SelectedTheme.TextDark,
-        TextSize = 10,
-        ZIndex = 2000,
-        ThemeTag = "TextDark"
+        Color = Style.Outline,
+        Thickness = 1,
+        ApplyStrokeMode = Enum.ApplyStrokeMode.Border
     })
-    MakeResizable(ResizeBtn, WindowContainer)
 
+    local function Divider(props)
+        props.BackgroundColor3 = Style.Outline
+        props.BorderSizePixel = 0
+        props.ZIndex = props.ZIndex or 6
+        return Create("Frame", props)
+    end
+
+    -- Ust cizgi / sidebar dikey cizgi / footer cizgisi
+    Divider({Name = "TopDivider", Parent = Main, Size = UDim2.new(1, 0, 0, 1), Position = UDim2.new(0, 0, 0, TOPBAR_H)})
+    Divider({Name = "SideDivider", Parent = Main, Size = UDim2.new(0, 1, 1, -FOOTER_H), Position = UDim2.new(0, SidebarWidth, 0, 0)})
+    Divider({Name = "FooterDivider", Parent = Main, Size = UDim2.new(1, 0, 0, 1), Position = UDim2.new(0, 0, 1, -FOOTER_H)})
+
+    -- ===== TOP BAR =====
     local TopBar = Create("Frame", {
+        Name = "TopBar",
         Parent = Main,
-        Size = UDim2.new(1, 0, 0, 45),
+        Size = UDim2.new(1, 0, 0, TOPBAR_H),
         BackgroundTransparency = 1,
         ZIndex = 5
     })
     MakeDraggable(TopBar, WindowContainer)
-    
-    Create("Frame", {
+
+    local LogoIcon = Create("ImageLabel", {
+        Name = "Logo",
         Parent = TopBar,
-        Size = UDim2.new(1, 0, 0, 1),
-        Position = UDim2.new(0, 0, 1, 0),
-        BackgroundColor3 = SelectedTheme.TextDark,
-        BackgroundTransparency = 0.8,
-        BorderSizePixel = 0,
-        ZIndex = 6,
-        ThemeTag = "TextDark"
+        Size = UDim2.fromOffset(28, 28),
+        Position = CompactSidebar and UDim2.new(0, SidebarWidth / 2, 0.5, 0) or UDim2.new(0, 14, 0.5, 0),
+        AnchorPoint = CompactSidebar and Vector2.new(0.5, 0.5) or Vector2.new(0, 0.5),
+        BackgroundTransparency = 1,
+        ZIndex = 7
     })
-    
-    local TitleOffsetX = 18
-    if CustomIconID and CustomIconID ~= "" then
-        TitleOffsetX = 48
-        local TopIcon = Create("ImageLabel", {
+    SetImageAsync(LogoIcon, "Image", (CustomIconID and CustomIconID ~= "") and CustomIconID or "rbxassetid://10884488899")
+
+    if not CompactSidebar then
+        Create("TextLabel", {
             Parent = TopBar,
-            Size = UDim2.new(0, 26, 0, 26),
-            Position = UDim2.new(0, 16, 0.5, -13),
+            Size = UDim2.new(0, SidebarWidth - 54, 1, 0),
+            Position = UDim2.new(0, 48, 0, 0),
             BackgroundTransparency = 1,
-            ZIndex = 6
+            Text = Title,
+            Font = Library.GlobalFontBold,
+            TextColor3 = SelectedTheme.Text,
+            TextSize = 14,
+            TextXAlignment = Enum.TextXAlignment.Left,
+            TextTruncate = Enum.TextTruncate.AtEnd,
+            ZIndex = 7,
+            ThemeTag = "Text"
         })
-        SetImageAsync(TopIcon, "Image", CustomIconID)
     end
 
-    Create("TextLabel", {
+    -- Search bar (turkuaz)
+    local SearchFrame = Create("Frame", {
+        Name = "Search",
         Parent = TopBar,
-        Size = UDim2.new(1, -40, 1, 0),
-        Position = UDim2.new(0, TitleOffsetX, 0, 0),
-        BackgroundTransparency = 1,
-        Text = Title,
-        Font = Library.GlobalFontBold,
-        TextColor3 = SelectedTheme.Text,
-        TextSize = 16,
-        TextXAlignment = Enum.TextXAlignment.Left,
-        ZIndex = 6,
-        ThemeTag = "Text"
+        AnchorPoint = Vector2.new(0, 0.5),
+        Position = UDim2.new(0, SidebarWidth + 8, 0.5, 0),
+        Size = UDim2.new(1, -(SidebarWidth + 8 + 44), 0, 30),
+        BackgroundColor3 = Style.Element,
+        BorderSizePixel = 0,
+        ZIndex = 7
     })
-    
-    local Close = Create("TextButton", {
-        Parent = TopBar,
-        Size = UDim2.new(0, 45, 1, 0),
-        Position = UDim2.new(1, -45, 0, 0),
+    local SearchCorner = Instance.new("UICorner")
+    SearchCorner.CornerRadius = UDim.new(1, 0)
+    SearchCorner.Parent = SearchFrame
+    local SearchStroke = Create("UIStroke", {
+        Parent = SearchFrame,
+        Color = SelectedTheme.ElementAccent,
+        Transparency = 0.65,
+        Thickness = 1,
+        ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+    })
+    table.insert(Library.ThemeObjects.ElementAccent, SearchStroke)
+
+    local SearchIcon = Create("ImageLabel", {
+        Name = "SearchIcon",
+        Parent = SearchFrame,
+        Size = UDim2.fromOffset(16, 16),
+        AnchorPoint = Vector2.new(0, 0.5),
+        Position = UDim2.new(0, 11, 0.5, 0),
+        BackgroundTransparency = 1,
+        ImageColor3 = SelectedTheme.ElementAccent,
+        ZIndex = 8,
+        ThemeTag = "ElementAccent"
+    })
+    ApplyIcon(SearchIcon, "search")
+
+    local SearchInput = Create("TextBox", {
+        Name = "SearchInput",
+        Parent = SearchFrame,
+        Size = UDim2.new(1, -64, 1, 0),
+        Position = UDim2.new(0, 32, 0, 0),
         BackgroundTransparency = 1,
         Text = "",
-        ZIndex = 6
-    })
-    
-    local Cross1 = Create("Frame", {
-        Parent = Close,
-        AnchorPoint = Vector2.new(0.5, 0.5),
-        Position = UDim2.new(0.5, 0, 0.5, 0),
-        Size = UDim2.new(0, 12, 0, 2),
-        BackgroundColor3 = SelectedTheme.Text,
-        Rotation = 45,
-        ZIndex = 6,
+        PlaceholderText = "Search",
+        PlaceholderColor3 = Color3.fromRGB(120, 135, 138),
+        Font = Library.GlobalFont,
+        TextColor3 = SelectedTheme.Text,
+        TextSize = 14,
+        TextXAlignment = Enum.TextXAlignment.Center,
+        ClearTextOnFocus = false,
+        TextTruncate = Enum.TextTruncate.AtEnd,
+        ZIndex = 8,
         ThemeTag = "Text"
     })
-    AddCorner(Cross1, 2)
-    
-    local Cross2 = Create("Frame", {
-        Parent = Close,
+
+    SearchInput.Focused:Connect(function()
+        TS:Create(SearchStroke, TweenInfo.new(0.2), {Transparency = 0}):Play()
+    end)
+    SearchInput.FocusLost:Connect(function()
+        TS:Create(SearchStroke, TweenInfo.new(0.2), {Transparency = 0.65}):Play()
+    end)
+
+    -- Sag ust: tasima ikonu
+    local MoveIcon = Create("ImageLabel", {
+        Name = "MoveIcon",
+        Parent = TopBar,
+        Size = UDim2.fromOffset(20, 20),
         AnchorPoint = Vector2.new(0.5, 0.5),
-        Position = UDim2.new(0.5, 0, 0.5, 0),
-        Size = UDim2.new(0, 12, 0, 2),
-        BackgroundColor3 = SelectedTheme.Text,
-        Rotation = -45,
-        ZIndex = 6,
-        ThemeTag = "Text"
+        Position = UDim2.new(1, -22, 0.5, 0),
+        BackgroundTransparency = 1,
+        ImageColor3 = Style.Icon,
+        ZIndex = 7
     })
-    AddCorner(Cross2, 2)
-    
-    Close.MouseEnter:Connect(function() 
-        TS:Create(Cross1, TweenInfo.new(0.2), {BackgroundColor3 = SelectedTheme.Error}):Play() 
-        TS:Create(Cross2, TweenInfo.new(0.2), {BackgroundColor3 = SelectedTheme.Error}):Play() 
+    ApplyIcon(MoveIcon, "move")
+
+    -- Pencere disinda sag ust kosede buyuk X (eski kapatma butonu: arayuzu kaldirir)
+    local CloseX = Instance.new("TextButton")
+    CloseX.Name = "CloseX"
+    CloseX.Size = UDim2.fromOffset(30, 30)
+    CloseX.AnchorPoint = Vector2.new(0.5, 0.5)
+    CloseX.Position = UDim2.new(1, 12, 0, 2)
+    CloseX.BackgroundTransparency = 1
+    CloseX.Text = "X"
+    CloseX.Font = Enum.Font.GothamBlack
+    CloseX.TextSize = 30
+    CloseX.TextColor3 = Color3.new(1, 1, 1)
+    CloseX.TextStrokeTransparency = 0.7
+    CloseX.TextTransparency = 1
+    CloseX.AutoButtonColor = false
+    CloseX.ZIndex = 50
+    CloseX.Parent = WindowContainer
+
+    CloseX.MouseEnter:Connect(function()
+        TS:Create(CloseX, TweenInfo.new(0.2), {TextColor3 = SelectedTheme.Error}):Play()
     end)
-    Close.MouseLeave:Connect(function() 
-        TS:Create(Cross1, TweenInfo.new(0.2), {BackgroundColor3 = SelectedTheme.Text}):Play() 
-        TS:Create(Cross2, TweenInfo.new(0.2), {BackgroundColor3 = SelectedTheme.Text}):Play() 
+    CloseX.MouseLeave:Connect(function()
+        TS:Create(CloseX, TweenInfo.new(0.2), {TextColor3 = Color3.new(1, 1, 1)}):Play()
     end)
-    Close.MouseButton1Click:Connect(function()
+    CloseX.MouseButton1Click:Connect(function()
         ScreenGui:Destroy()
     end)
 
-    local TabContainer = Create("ScrollingFrame", {
-        Parent = Main,
-        Size = UDim2.new(0, SidebarWidth, 1, -171),
-        Position = UDim2.new(0, SidebarX, 0, 60),
-        BackgroundColor3 = SelectedTheme.Second,
-        BackgroundTransparency = 0.5,
-        ScrollBarThickness = 0,
-        BorderSizePixel = 0,
-        ZIndex = 5,
-        ThemeTag = "Second"
-    })
-    AddCorner(TabContainer, 8)
-
-    local TabContainerStroke = AddStroke(TabContainer, SelectedTheme)
-    TabContainerStroke.Transparency = 0.8
-    Create("UIListLayout", {
-        Parent = TabContainer,
-        Padding = UDim.new(0, 6)
-    })
-    Create("UIPadding", {
-        Parent = TabContainer,
-        PaddingTop = UDim.new(0, 8),
-        PaddingBottom = UDim.new(0, 8),
-        PaddingLeft = UDim.new(0, 6),
-        PaddingRight = UDim.new(0, 6)
-    })
-    
-    local OpenSettingsBtn = Create("TextButton", {
-        Parent = Main,
-        Size = UDim2.new(0, SidebarWidth, 0, 40),
-        Position = UDim2.new(0, SidebarX, 1, -103),
-        BackgroundColor3 = SelectedTheme.Second,
-        BackgroundTransparency = 0.5,
-        Text = CompactSidebar and "⚙" or "GUI Settings",
-        Font = Library.GlobalFontBold,
-        TextColor3 = SelectedTheme.Text,
-        TextSize = CompactSidebar and 16 or 13,
-        ZIndex = 6,
-        ThemeTag = "Second"
-    })
-    AddCorner(OpenSettingsBtn, 8)
-    table.insert(Library.ThemeObjects.Text, OpenSettingsBtn)
-
-    CreateRipple(OpenSettingsBtn, SelectedTheme.Accent)
-    AddStroke(OpenSettingsBtn, SelectedTheme).Transparency = 0.8
-    
-    local hoverTweenSettings, leaveTweenSettings
-    OpenSettingsBtn.MouseEnter:Connect(function()
-        if leaveTweenSettings then leaveTweenSettings:Cancel() end
-        hoverTweenSettings = TS:Create(OpenSettingsBtn, TweenInfo.new(0.2), {BackgroundTransparency = 0.2})
-        hoverTweenSettings:Play()
-    end)
-    OpenSettingsBtn.MouseLeave:Connect(function()
-        if hoverTweenSettings then hoverTweenSettings:Cancel() end
-        leaveTweenSettings = TS:Create(OpenSettingsBtn, TweenInfo.new(0.2), {BackgroundTransparency = 0.5})
-        leaveTweenSettings:Play()
-    end)
-    OpenSettingsBtn.MouseButton1Down:Connect(function()
-        TS:Create(OpenSettingsBtn, TweenInfo.new(0.1), {Size = UDim2.new(0, SidebarWidth - 4, 0, 36), Position = UDim2.new(0, SidebarX + 2, 1, -101)}):Play()
-    end)
-    OpenSettingsBtn.MouseButton1Up:Connect(function()
-        TS:Create(OpenSettingsBtn, TweenInfo.new(0.1), {Size = UDim2.new(0, SidebarWidth, 0, 40), Position = UDim2.new(0, SidebarX, 1, -103)}):Play()
-    end)
-
-    local ProfileFrame = Create("Frame", {
-        Parent = Main,
-        Size = UDim2.new(0, SidebarWidth, 0, 40),
-        Position = UDim2.new(0, SidebarX, 1, -55),
-        BackgroundColor3 = SelectedTheme.Second,
-        BackgroundTransparency = 0.5,
-        BorderSizePixel = 0,
-        ZIndex = 5,
-        ThemeTag = "Second"
-    })
-    AddCorner(ProfileFrame, 8)
-    AddStroke(ProfileFrame, SelectedTheme).Transparency = 0.8
-
-    local AvatarImg = "rbxasset://textures/ui/GuiImagePlaceholder.png"
-    pcall(function()
-        AvatarImg = Plrs:GetUserThumbnailAsync(LP.UserId, Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size48x48)
-    end)
-    
-    local Avatar = Create("ImageLabel", {
-        Parent = ProfileFrame,
-        Size = UDim2.new(0, 28, 0, 28),
-        Position = CompactSidebar and UDim2.new(0.5, -14, 0.5, -14) or UDim2.new(0, 6, 0.5, -14),
-        BackgroundTransparency = 1,
-        Image = AvatarImg,
-        ZIndex = 6
-    })
-    AddCorner(Avatar, 100)
-    
+    -- ===== FOOTER =====
     Create("TextLabel", {
-        Parent = ProfileFrame,
-        Visible = not CompactSidebar,
-        Size = UDim2.new(1, -45, 0, 16),
-        Position = UDim2.new(0, 40, 0, 5),
+        Name = "Footer",
+        Parent = Main,
+        Size = UDim2.new(1, -60, 0, FOOTER_H),
+        Position = UDim2.new(0, 30, 1, -FOOTER_H),
         BackgroundTransparency = 1,
-        Text = LP.DisplayName,
-        Font = Library.GlobalFontBold,
-        TextColor3 = SelectedTheme.Text,
-        TextSize = 13,
-        TextXAlignment = Enum.TextXAlignment.Left,
-        ZIndex = 6,
-        TextTruncate = Enum.TextTruncate.AtEnd,
-        ThemeTag = "Text"
-    })
-    Create("TextLabel", {
-        Parent = ProfileFrame,
-        Visible = not CompactSidebar,
-        Size = UDim2.new(1, -45, 0, 14),
-        Position = UDim2.new(0, 40, 0, 20),
-        BackgroundTransparency = 1,
-        Text = "@" .. LP.Name,
+        Text = Config.Footer or Title,
         Font = Library.GlobalFont,
         TextColor3 = SelectedTheme.TextDark,
-        TextSize = 11,
-        TextXAlignment = Enum.TextXAlignment.Left,
-        ZIndex = 6,
+        TextSize = 12,
         TextTruncate = Enum.TextTruncate.AtEnd,
+        ZIndex = 6,
         ThemeTag = "TextDark"
     })
 
-    local PageContainer = Create("Frame", {
+    local ResizeBtn = Create("ImageButton", {
+        Name = "Resize",
         Parent = Main,
-        Size = UDim2.new(1, -(ContentX + 15), 1, -75),
-        Position = UDim2.new(0, ContentX, 0, 60),
+        Size = UDim2.fromOffset(15, 15),
+        AnchorPoint = Vector2.new(1, 1),
+        Position = UDim2.new(1, -5, 1, -4),
+        BackgroundTransparency = 1,
+        ImageColor3 = Style.Icon,
+        AutoButtonColor = false,
+        ZIndex = 2000
+    })
+    ApplyIcon(ResizeBtn, "move-diagonal-2")
+    ResizeBtn.Rotation = 90
+    MakeResizable(ResizeBtn, WindowContainer)
+
+    -- ===== TOOLTIP (compact sidebar icin) =====
+    local Tooltip = Create("TextLabel", {
+        Name = "Tooltip",
+        Parent = ScreenGui,
+        Size = UDim2.fromOffset(0, 22),
+        AutomaticSize = Enum.AutomaticSize.X,
+        BackgroundColor3 = Style.Element,
+        BorderSizePixel = 0,
+        Text = "",
+        Font = Library.GlobalFont,
+        TextColor3 = SelectedTheme.Text,
+        TextSize = 12,
+        Visible = false,
+        ZIndex = 20000,
+        ThemeTag = "Text"
+    })
+    Create("UIPadding", {Parent = Tooltip, PaddingLeft = UDim.new(0, 8), PaddingRight = UDim.new(0, 8)})
+    local TooltipCorner = Instance.new("UICorner")
+    TooltipCorner.CornerRadius = UDim.new(0, 4)
+    TooltipCorner.Parent = Tooltip
+    Create("UIStroke", {Parent = Tooltip, Color = Style.Outline, Thickness = 1, ApplyStrokeMode = Enum.ApplyStrokeMode.Border})
+
+    local function AttachTooltip(obj, text)
+        obj.MouseEnter:Connect(function()
+            Tooltip.Text = text
+            Tooltip.Position = UDim2.fromOffset(Mouse.X + 16, Mouse.Y - 11)
+            Tooltip.Visible = true
+        end)
+        obj.MouseMoved:Connect(function()
+            Tooltip.Position = UDim2.fromOffset(Mouse.X + 16, Mouse.Y - 11)
+        end)
+        obj.MouseLeave:Connect(function()
+            Tooltip.Visible = false
+        end)
+        obj.MouseButton1Click:Connect(function()
+            Tooltip.Visible = false
+        end)
+    end
+
+    -- ===== SIDEBAR =====
+    local TabContainer = Create("ScrollingFrame", {
+        Name = "TabContainer",
+        Parent = Main,
+        Size = UDim2.new(0, SidebarWidth, 1, -(TOPBAR_H + FOOTER_H + 1)),
+        Position = UDim2.new(0, 0, 0, TOPBAR_H + 1),
+        BackgroundTransparency = 1,
+        ScrollBarThickness = 0,
+        BorderSizePixel = 0,
+        CanvasSize = UDim2.new(0, 0, 0, 0),
+        AutomaticCanvasSize = Enum.AutomaticSize.Y,
+        ScrollingDirection = Enum.ScrollingDirection.Y,
+        ZIndex = 5
+    })
+    Create("UIListLayout", {
+        Parent = TabContainer,
+        SortOrder = Enum.SortOrder.LayoutOrder,
+        HorizontalAlignment = Enum.HorizontalAlignment.Center,
+        Padding = UDim.new(0, 1)
+    })
+    Create("UIPadding", {
+        Parent = TabContainer,
+        PaddingTop = UDim.new(0, 6),
+        PaddingBottom = UDim.new(0, 6),
+        PaddingLeft = UDim.new(0, 6),
+        PaddingRight = UDim.new(0, 6)
+    })
+
+    -- Ayarlar (GUI Settings) butonu: sidebar'in en altinda disli ikonu
+    local OpenSettingsBtn = Create("TextButton", {
+        Name = "SettingsBtn",
+        Parent = TabContainer,
+        Size = UDim2.new(1, 0, 0, TAB_H),
+        BackgroundColor3 = Style.Element,
+        BackgroundTransparency = 1,
+        Text = "",
+        AutoButtonColor = false,
+        LayoutOrder = 100000,
+        ZIndex = 6
+    })
+    AddCorner(OpenSettingsBtn, 6)
+
+    local SettingsGear = Create("ImageLabel", {
+        Name = "TabIcon",
+        Parent = OpenSettingsBtn,
+        Size = UDim2.fromOffset(20, 20),
+        AnchorPoint = CompactSidebar and Vector2.new(0.5, 0.5) or Vector2.new(0, 0.5),
+        Position = CompactSidebar and UDim2.new(0.5, 0, 0.5, 0) or UDim2.new(0, 10, 0.5, 0),
+        BackgroundTransparency = 1,
+        ImageColor3 = SelectedTheme.ElementAccent,
+        ImageTransparency = 0.45,
+        ZIndex = 7,
+        ThemeTag = "ElementAccent"
+    })
+    ApplyIcon(SettingsGear, "settings")
+
+    if not CompactSidebar then
+        Create("TextLabel", {
+            Name = "TabLabel",
+            Parent = OpenSettingsBtn,
+            Size = UDim2.new(1, -40, 1, 0),
+            Position = UDim2.new(0, 36, 0, 0),
+            BackgroundTransparency = 1,
+            Text = "UI Settings",
+            Font = Library.GlobalFont,
+            TextColor3 = SelectedTheme.TextDark,
+            TextSize = 13,
+            TextXAlignment = Enum.TextXAlignment.Left,
+            ZIndex = 7
+        })
+    else
+        AttachTooltip(OpenSettingsBtn, "UI Settings")
+    end
+
+    local SettingsIsActive = false
+    OpenSettingsBtn.MouseEnter:Connect(function()
+        if not SettingsIsActive then
+            TS:Create(OpenSettingsBtn, TweenInfo.new(0.2), {BackgroundTransparency = 0.6}):Play()
+            TS:Create(SettingsGear, TweenInfo.new(0.2), {ImageTransparency = 0.15}):Play()
+        end
+    end)
+    OpenSettingsBtn.MouseLeave:Connect(function()
+        if not SettingsIsActive then
+            TS:Create(OpenSettingsBtn, TweenInfo.new(0.2), {BackgroundTransparency = 1}):Play()
+            TS:Create(SettingsGear, TweenInfo.new(0.2), {ImageTransparency = 0.45}):Play()
+        end
+    end)
+
+    -- ===== PAGE AREA =====
+    local PageContainer = Create("Frame", {
+        Name = "PageContainer",
+        Parent = Main,
+        Size = UDim2.new(1, -(SidebarWidth + 8 + 6), 1, -(TOPBAR_H + FOOTER_H + 14)),
+        Position = UDim2.new(0, SidebarWidth + 8, 0, TOPBAR_H + 8),
         BackgroundTransparency = 1,
         ZIndex = 5,
         ClipsDescendants = true
     })
 
-    local IsOpen, LastSize = true, WindowSize
-    
-    local function ToggleUI()
-        IsOpen = not IsOpen 
-        if IsOpen then 
-            WindowContainer.Visible = true 
-            TS:Create(WindowContainer, TweenInfo.new(0.6, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {Size = LastSize}):Play() 
-            TS:Create(Shadow1, TweenInfo.new(0.6), {ImageTransparency = 0.35}):Play()
-            TS:Create(Shadow2, TweenInfo.new(0.6), {ImageTransparency = 0.4}):Play()
-        else 
-            LastSize = WindowContainer.Size 
-            local close = TS:Create(WindowContainer, TweenInfo.new(0.5, Enum.EasingStyle.Quart, Enum.EasingDirection.In), {Size = UDim2.new(0, 0, 0, 0)})
-            close:Play() 
-            TS:Create(Shadow1, TweenInfo.new(0.5, Enum.EasingStyle.Quart, Enum.EasingDirection.In), {ImageTransparency = 1}):Play()
-            TS:Create(Shadow2, TweenInfo.new(0.5, Enum.EasingStyle.Quart, Enum.EasingDirection.In), {ImageTransparency = 1}):Play()
-            close.Completed:Connect(function()
-                if not IsOpen then
-                    WindowContainer.Visible = false
-                end
-            end) 
+    local TabCount = 0
+    local ActiveTab = nil
+    local Funcs = {}
+
+    -- ===== SEARCH (TUM sekmelerde arar; hangi sekmede olursan ol) =====
+    local SearchQuery = ""
+    local AllTabs = {}
+    local BlockSeq = 0
+    local SearchState = nil
+
+    local SearchPage = Create("ScrollingFrame", {
+        Name = "SearchResults",
+        Parent = PageContainer,
+        Size = UDim2.new(1, 0, 1, 0),
+        BackgroundTransparency = 1,
+        ScrollBarThickness = 3,
+        ScrollBarImageColor3 = SelectedTheme.TextDark,
+        BorderSizePixel = 0,
+        Visible = false,
+        CanvasSize = UDim2.new(0, 0, 0, 0),
+        ZIndex = 6
+    })
+    local SR_Holder = Create("Frame", {
+        Name = "SearchColumns",
+        Parent = SearchPage,
+        Size = UDim2.fromScale(1, 0),
+        AutomaticSize = Enum.AutomaticSize.Y,
+        BackgroundTransparency = 1
+    })
+    Create("UIListLayout", {
+        Parent = SR_Holder,
+        FillDirection = Enum.FillDirection.Horizontal,
+        SortOrder = Enum.SortOrder.LayoutOrder,
+        Padding = UDim.new(0, 10)
+    })
+    Create("UIPadding", {
+        Parent = SR_Holder,
+        PaddingTop = UDim.new(0, 2),
+        PaddingLeft = UDim.new(0, 5),
+        PaddingRight = UDim.new(0, 10),
+        PaddingBottom = UDim.new(0, 15)
+    })
+    local SR_Left = Create("Frame", {
+        Parent = SR_Holder,
+        Size = UDim2.new(0.5, -5, 0, 0),
+        AutomaticSize = Enum.AutomaticSize.Y,
+        BackgroundTransparency = 1,
+        LayoutOrder = 1
+    })
+    local SR_LeftLayout = Create("UIListLayout", {Parent = SR_Left, SortOrder = Enum.SortOrder.LayoutOrder, Padding = UDim.new(0, 10)})
+    local SR_Right = Create("Frame", {
+        Parent = SR_Holder,
+        Size = UDim2.new(0.5, -5, 0, 0),
+        AutomaticSize = Enum.AutomaticSize.Y,
+        BackgroundTransparency = 1,
+        LayoutOrder = 2
+    })
+    local SR_RightLayout = Create("UIListLayout", {Parent = SR_Right, SortOrder = Enum.SortOrder.LayoutOrder, Padding = UDim.new(0, 10)})
+    local function SR_UpdateCanvas()
+        local maxH = math.max(SR_LeftLayout.AbsoluteContentSize.Y, SR_RightLayout.AbsoluteContentSize.Y)
+        SearchPage.CanvasSize = UDim2.new(0, 0, 0, maxH + 30)
+    end
+    SR_LeftLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(SR_UpdateCanvas)
+    SR_RightLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(SR_UpdateCanvas)
+
+    local SR_Empty = Create("TextLabel", {
+        Name = "NoResults",
+        Parent = SearchPage,
+        Size = UDim2.new(1, 0, 0, 40),
+        Position = UDim2.new(0, 0, 0, 10),
+        BackgroundTransparency = 1,
+        Text = "No results",
+        Font = Library.GlobalFont,
+        TextColor3 = SelectedTheme.TextDark,
+        TextSize = 14,
+        Visible = false,
+        ZIndex = 7,
+        ThemeTag = "TextDark"
+    })
+
+    local function TextHit(t, q)
+        return type(t) == "string" and t ~= "" and string.find(string.lower(t), q, 1, true) ~= nil
+    end
+
+    local function ElementHit(obj, q)
+        if (obj:IsA("TextLabel") or obj:IsA("TextButton")) and TextHit(obj.Text, q) then
+            return true
+        end
+        for _, c in ipairs(obj:GetChildren()) do
+            if (c:IsA("TextLabel") or c:IsA("TextButton")) and TextHit(c.Text, q) then
+                return true
+            end
+        end
+        return false
+    end
+
+    local function RestoreBlock(blk)
+        if not blk.Parent then return end
+        local collapsed = blk:GetAttribute("Collapsed") == true
+        local content = blk:FindFirstChild("BlockContent")
+        local sep = blk:FindFirstChild("BlockSep")
+        if content then content.Visible = not collapsed end
+        if sep then sep.Visible = not collapsed end
+    end
+
+    -- Sekme basligi tasiyan sonuc kutusu (tek sutunlu sekmelerdeki elementler icin)
+    local function MakeResultGroup(title)
+        local F = Create("Frame", {
+            Name = "SearchGroup",
+            Size = UDim2.new(1, 0, 0, 0),
+            AutomaticSize = Enum.AutomaticSize.Y,
+            BackgroundColor3 = Style.Panel,
+            BorderSizePixel = 0,
+            ZIndex = 5
+        })
+        AddCorner(F, 9)
+        Create("UIStroke", {Parent = F, Color = Style.Outline, Thickness = 1, ApplyStrokeMode = Enum.ApplyStrokeMode.Border})
+        Create("TextLabel", {
+            Name = "GroupTitle",
+            Parent = F,
+            Size = UDim2.new(1, -24, 0, 34),
+            Position = UDim2.new(0, 12, 0, 0),
+            BackgroundTransparency = 1,
+            Text = tostring(title),
+            Font = Library.GlobalFont,
+            TextColor3 = SelectedTheme.Text,
+            TextSize = 14,
+            TextXAlignment = Enum.TextXAlignment.Left,
+            TextTruncate = Enum.TextTruncate.AtEnd,
+            ZIndex = 7
+        })
+        Create("Frame", {
+            Parent = F,
+            Size = UDim2.new(1, 0, 0, 1),
+            Position = UDim2.new(0, 0, 0, 34),
+            BackgroundColor3 = Style.Outline,
+            BorderSizePixel = 0,
+            ZIndex = 6
+        })
+        local Content = Create("Frame", {
+            Name = "BlockContent",
+            Parent = F,
+            Size = UDim2.new(1, 0, 0, 0),
+            Position = UDim2.new(0, 0, 0, 35),
+            AutomaticSize = Enum.AutomaticSize.Y,
+            BackgroundTransparency = 1,
+            ZIndex = 5
+        })
+        Create("UIListLayout", {Parent = Content, SortOrder = Enum.SortOrder.LayoutOrder, Padding = UDim.new(0, 6)})
+        Create("UIPadding", {Parent = Content, PaddingTop = UDim.new(0, 8), PaddingBottom = UDim.new(0, 10), PaddingLeft = UDim.new(0, 8), PaddingRight = UDim.new(0, 8)})
+        return F, Content
+    end
+
+    -- Onceki aramayi tamamen geri al: her sey kendi sekmesine/yerine doner
+    local function RestoreSearch()
+        local st = SearchState
+        if not st then return end
+        SearchState = nil
+        for i = #st.Moved, 1, -1 do
+            local m = st.Moved[i]
+            if m.Obj and m.Obj.Parent then
+                m.Obj.Parent = m.Parent
+                m.Obj.LayoutOrder = m.Order
+            end
+        end
+        for obj, vis in pairs(st.Snapshot) do
+            if obj.Parent then obj.Visible = vis end
+        end
+        for lbl, txt in pairs(st.Titles) do
+            if lbl.Parent then lbl.Text = txt end
+        end
+        for blk in pairs(st.Blocks) do
+            RestoreBlock(blk)
+        end
+        for _, t in ipairs(st.Temp) do
+            pcall(function() t:Destroy() end)
         end
     end
+
+    local function ApplySearch()
+        local q = string.lower(SearchQuery or "")
+        q = q:gsub("^%s+", ""):gsub("%s+$", "")
+
+        RestoreSearch()
+
+        if q == "" then
+            SearchPage.Visible = false
+            SR_Empty.Visible = false
+            if ActiveTab and ActiveTab.Page then
+                ActiveTab.Page.Visible = true
+                ActiveTab.Page.Position = UDim2.new(0, 0, 0, 0)
+            end
+            return
+        end
+
+        local st = {Snapshot = {}, Moved = {}, Titles = {}, Blocks = {}, Temp = {}}
+        SearchState = st
+
+        local function Snap(o)
+            if st.Snapshot[o] == nil then
+                st.Snapshot[o] = o.Visible
+            end
+            return st.Snapshot[o]
+        end
+
+        local function FilterList(container, forceShow)
+            local any = false
+            for _, el in ipairs(container:GetChildren()) do
+                if el:IsA("GuiObject") then
+                    local was = Snap(el)
+                    local hit = was and (forceShow or ElementHit(el, q))
+                    el.Visible = hit and true or false
+                    if hit then any = true end
+                end
+            end
+            return any
+        end
+
+        local function EstHeight(container)
+            local h = 50
+            for _, el in ipairs(container:GetChildren()) do
+                if el:IsA("GuiObject") and el.Visible then
+                    local y = el.Size.Y.Offset
+                    if not y or y <= 0 then y = el.AbsoluteSize.Y end
+                    h = h + (y or 30) + 6
+                end
+            end
+            return h
+        end
+
+        local seq, hL, hR, found = 0, 0, 0, 0
+        local function Place(obj, estH, record)
+            seq = seq + 1
+            local col
+            if hL <= hR then
+                col = SR_Left
+                hL = hL + estH
+            else
+                col = SR_Right
+                hR = hR + estH
+            end
+            if record then
+                table.insert(st.Moved, {Obj = obj, Parent = obj.Parent, Order = obj.LayoutOrder})
+            end
+            obj.LayoutOrder = seq
+            obj.Parent = col
+            found = found + 1
+        end
+
+        for _, T in ipairs(AllTabs) do
+            local Page = T.Page
+            if Page and Page.Parent then
+                local Holder = Page:FindFirstChild("ColumnsHolder")
+
+                -- 1) Sekmede dogrudan duran elementler (orn. Fight sekmesi)
+                local loose = {}
+                for _, el in ipairs(Page:GetChildren()) do
+                    if el:IsA("GuiObject") and el ~= Holder and Snap(el) and ElementHit(el, q) then
+                        table.insert(loose, el)
+                    end
+                end
+                if #loose > 0 then
+                    local grp, content = MakeResultGroup(T.Name)
+                    table.insert(st.Temp, grp)
+                    for _, el in ipairs(loose) do
+                        table.insert(st.Moved, {Obj = el, Parent = el.Parent, Order = el.LayoutOrder})
+                        el.Parent = content
+                    end
+                    Place(grp, EstHeight(content), false)
+                end
+
+                -- 2) Bloklar
+                if Holder then
+                    local blocks = {}
+                    for _, col in ipairs(Holder:GetChildren()) do
+                        if col:IsA("Frame") then
+                            for _, blk in ipairs(col:GetChildren()) do
+                                if blk:IsA("Frame") and blk.Name == "Block" then
+                                    table.insert(blocks, blk)
+                                end
+                            end
+                        end
+                    end
+                    table.sort(blocks, function(a, b) return (a.LayoutOrder or 0) < (b.LayoutOrder or 0) end)
+
+                    for _, blk in ipairs(blocks) do
+                        if Snap(blk) then
+                            local header = blk:FindFirstChild("BlockHeader")
+                            local titleLbl = header and header:FindFirstChild("BlockTitle")
+                            local titleHit = titleLbl and TextHit(titleLbl.Text, q)
+                            local content = blk:FindFirstChild("BlockContent")
+                            local any = content and FilterList(content, titleHit) or false
+                            if titleHit or any then
+                                st.Blocks[blk] = true
+                                if content then content.Visible = true end
+                                local sep = blk:FindFirstChild("BlockSep")
+                                if sep then sep.Visible = true end
+                                if titleLbl then
+                                    st.Titles[titleLbl] = titleLbl.Text
+                                    titleLbl.Text = tostring(T.Name) .. "  /  " .. titleLbl.Text
+                                end
+                                Place(blk, content and EstHeight(content) or 50, true)
+                            end
+                        end
+                    end
+                end
+            end
+        end
+
+        for _, T in ipairs(AllTabs) do
+            if T.Page then T.Page.Visible = false end
+        end
+        SR_Empty.Visible = (found == 0)
+        SearchPage.CanvasPosition = Vector2.new(0, 0)
+        SearchPage.Visible = true
+        SR_UpdateCanvas()
+    end
+
+    -- Yazarken her harfte degil, kisa bir bekleme sonrasi ara (kasma olmasin)
+    local SearchToken = 0
+    SearchInput:GetPropertyChangedSignal("Text"):Connect(function()
+        SearchQuery = SearchInput.Text
+        SearchToken = SearchToken + 1
+        local my = SearchToken
+        if SearchQuery:gsub("%s", "") == "" then
+            ApplySearch()
+            return
+        end
+        task.delay(0.12, function()
+            if my == SearchToken then
+                ApplySearch()
+            end
+        end)
+    end)
+
+    -- ===== OPEN / CLOSE =====
+    -- Acilis: Astra tarzi kisa fade. Kapanis: ANINDA (tusa basinca direkt kapanir).
+    local IsOpen = false
+    local CurrentFade = nil
+    local FadeInfo = TweenInfo.new(0.22, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+    local ToggleCallbacks = {}
+    local OpenTweens = {}
+
+    local function FireToggleCallbacks(show)
+        for _, fn in ipairs(ToggleCallbacks) do
+            task.spawn(pcall, fn, show)
+        end
+    end
+
+    local function SetWindowOpen(show)
+        IsOpen = show
+
+        if not show then
+            -- ANINDA KAPAT: devam eden fade'i iptal et, her seyi direkt gizle
+            CurrentFade = nil
+            for _, t in ipairs(OpenTweens) do pcall(function() t:Cancel() end) end
+            table.clear(OpenTweens)
+            Tooltip.Visible = false
+            if FadeGroup and Main.Parent == FadeGroup then
+                Main.Parent = WindowContainer
+            end
+            if FadeGroup then
+                FadeGroup.Visible = false
+                FadeGroup.GroupTransparency = 1
+            end
+            Shadow1.ImageTransparency = 1
+            Shadow2.ImageTransparency = 1
+            CloseX.TextTransparency = 1
+            CloseX.TextStrokeTransparency = 1
+            WindowContainer.Visible = false
+            FireToggleCallbacks(false)
+            return
+        end
+
+        WindowContainer.Visible = true
+        FireToggleCallbacks(true)
+        table.clear(OpenTweens)
+        table.insert(OpenTweens, TS:Create(Shadow1, FadeInfo, {ImageTransparency = 0.55}))
+        table.insert(OpenTweens, TS:Create(Shadow2, FadeInfo, {ImageTransparency = 0.6}))
+        table.insert(OpenTweens, TS:Create(CloseX, FadeInfo, {TextTransparency = 0, TextStrokeTransparency = 0.7}))
+        for _, t in ipairs(OpenTweens) do t:Play() end
+
+        if not FadeGroup then return end
+
+        if Main.Parent ~= FadeGroup then
+            FadeGroup.GroupTransparency = 1
+            Main.Parent = FadeGroup
+        end
+        FadeGroup.Visible = true
+
+        local tw = TS:Create(FadeGroup, FadeInfo, {GroupTransparency = 0})
+        CurrentFade = tw
+        table.insert(OpenTweens, tw)
+        tw.Completed:Connect(function()
+            if CurrentFade ~= tw then return end
+            CurrentFade = nil
+            if IsOpen then
+                Main.Parent = WindowContainer
+                FadeGroup.Visible = false
+            end
+        end)
+        tw:Play()
+    end
+
+    local function ToggleUI()
+        SetWindowOpen(not IsOpen)
+    end
+
+    -- Menu acilip kapandiginda cagrilir: fn(isOpen)
+    function Library:OnWindowToggle(fn)
+        if type(fn) == "function" then
+            table.insert(ToggleCallbacks, fn)
+        end
+    end
+
+    function Library:IsWindowOpen()
+        return IsOpen
+    end
+
+    function Library:SetWindowOpen(show)
+        SetWindowOpen(show and true or false)
+    end
+
+    SetWindowOpen(true)
 
     if UIS.TouchEnabled then
         local MobileBtn = Create("ImageButton", {
@@ -1875,7 +2479,7 @@ function Library:CreateWindow(Settings)
         MakeDraggable(MobileBtn, MobileBtn)
         CreateDropShadow(MobileBtn, 35, 0.3)
         table.insert(Library.ThemeObjects.Accent, MobileBtn)
-        
+
         MobileBtn.MouseButton1Click:Connect(ToggleUI)
     end
 
@@ -1883,7 +2487,7 @@ function Library:CreateWindow(Settings)
         if gpe or UIS:GetFocusedTextBox() then
             return
         end
-        
+
         local currentToggle = Library.ToggleKey
         if Library.Flags["Settings_ToggleKey"] then
             local s, k = pcall(function() return Enum.KeyCode[Library.Flags["Settings_ToggleKey"]] end)
@@ -1892,122 +2496,86 @@ function Library:CreateWindow(Settings)
             end
         end
 
-        if input.KeyCode == currentToggle then 
+        if input.KeyCode == currentToggle then
             ToggleUI()
         end
     end)
-    
-    local TabCount = 0
-    local ActiveTab = nil
-    local Funcs = {}
 
     function Funcs:CreateTab(TabName, Two_Column, ImageID)
         TabCount = TabCount + 1
         local MyIndex = TabCount
         local Tab = {}
-        
-        local IsPlusTextIcon = (ImageID == "__PLUS__")
-        local HasIcon = (ImageID ~= nil and ImageID ~= "")
-        
+
+        -- Astra ikonlari: lucide ismi verildiyse onu, yoksa sekme ismine gore otomatik ikon kullan
+        local IconRef = ImageID
+        if Config.AstraIcons ~= false then
+            if not GetLucide(ImageID) then
+                local mapped = AstraTabIcons[string.lower(tostring(TabName))]
+                if mapped then IconRef = mapped end
+            end
+        end
+        if IconRef == "__PLUS__" then IconRef = "plus" end
+        if (IconRef == nil or IconRef == "") and CompactSidebar then IconRef = "layers" end
+        local HasIcon = (IconRef ~= nil and IconRef ~= "")
+        local TabIconRef = IconRef
+
         local TabBtn = Create("TextButton", {
             Name = "TabBtn",
             Parent = TabContainer,
-            Size = UDim2.new(1, 0, 0, 38),
-            BackgroundColor3 = SelectedTheme.Main,
+            Size = UDim2.new(1, 0, 0, TAB_H),
+            BackgroundColor3 = Style.Element,
             BackgroundTransparency = 1,
             Text = "",
             AutoButtonColor = false,
-            ZIndex = 6,
-            ThemeTag = "Main"
+            LayoutOrder = MyIndex,
+            ZIndex = 6
         })
         AddCorner(TabBtn, 6)
 
-        local TabLabel
-        local ActiveLine
-        local TabIcon
+        local TabLabel = Create("TextLabel", {
+            Name = "TabLabel",
+            Parent = TabBtn,
+            Visible = not (CompactSidebar and HasIcon),
+            Size = UDim2.new(1, HasIcon and -42 or -20, 1, 0),
+            Position = UDim2.new(0, HasIcon and 36 or 12, 0, 0),
+            BackgroundTransparency = 1,
+            Text = TabName,
+            Font = Library.GlobalFont,
+            TextColor3 = SelectedTheme.TextDark,
+            TextSize = 13,
+            TextXAlignment = Enum.TextXAlignment.Left,
+            TextTruncate = Enum.TextTruncate.AtEnd,
+            ZIndex = 7
+        })
 
+        local TabIcon
         if HasIcon then
-            TabLabel = Create("TextLabel", {
-                Name = "TabLabel",
-                Parent = TabBtn,
-                Visible = not (CompactSidebar and HasIcon),
-                Size = UDim2.new(1, -44, 1, 0),
-                Position = UDim2.new(0, 38, 0, 0),
-                BackgroundTransparency = 1,
-                Text = TabName,
-                Font = Library.GlobalFontBold,
-                TextColor3 = SelectedTheme.TextDark,
-                TextSize = 14,
-                TextXAlignment = Enum.TextXAlignment.Left,
-                ZIndex = 7
-            })
-            
             TabIcon = Create("ImageLabel", {
                 Name = "TabIcon",
                 Parent = TabBtn,
-                Size = UDim2.new(0, 22, 0, 22),
-                Position = UDim2.new(0, 10, 0.5, -11),
+                Size = UDim2.fromOffset(20, 20),
+                AnchorPoint = CompactSidebar and Vector2.new(0.5, 0.5) or Vector2.new(0, 0.5),
+                Position = CompactSidebar and UDim2.new(0.5, 0, 0.5, 0) or UDim2.new(0, 10, 0.5, 0),
                 BackgroundTransparency = 1,
-                ImageColor3 = SelectedTheme.TextDark,
+                ImageColor3 = SelectedTheme.ElementAccent,
+                ImageTransparency = 0.45,
                 ZIndex = 7
             })
-            if IsPlusTextIcon then
-                TabIcon.Visible = false
-                Create("TextLabel", {
-                    Name = "TabGlyph",
-                    Parent = TabBtn,
-                    Size = UDim2.new(0, 22, 0, 30),
-                    Position = UDim2.new(0, 10, 0.5, -15),
-                    BackgroundTransparency = 1,
-                    Text = "+",
-                    Font = Library.GlobalFontBold,
-                    TextColor3 = SelectedTheme.ElementAccent,
-                    TextSize = 24,
-                    TextXAlignment = Enum.TextXAlignment.Center,
-                    TextYAlignment = Enum.TextYAlignment.Center,
-                    ZIndex = 8
-                })
-            else
-                SetImageAsync(TabIcon, "Image", ImageID)
-            end
-            table.insert(Library.ThemeObjects.TabLabels, {Label = TabLabel, Btn = TabBtn, Icon = TabIcon})
-        else
-            TabLabel = Create("TextLabel", {
-                Name = "TabLabel",
-                Parent = TabBtn,
-                Visible = not (CompactSidebar and HasIcon),
-                Size = UDim2.new(1, -25, 1, 0),
-                Position = UDim2.new(0, 20, 0, 0),
-                BackgroundTransparency = 1,
-                Text = TabName,
-                Font = Library.GlobalFontBold,
-                TextColor3 = SelectedTheme.TextDark,
-                TextSize = 14,
-                TextXAlignment = Enum.TextXAlignment.Left,
-                ZIndex = 7
-            })
-            
-            ActiveLine = Create("Frame", {
-                Name = "ActiveLine",
-                Parent = TabBtn,
-                Size = UDim2.new(0, 3, 0, 0),
-                Position = UDim2.new(0, 6, 0.5, 0),
-                AnchorPoint = Vector2.new(0, 0.5),
-                BackgroundColor3 = SelectedTheme.ElementAccent,
-                BorderSizePixel = 0,
-                ZIndex = 7,
-                ThemeTag = "ElementAccent"
-            })
-            AddCorner(ActiveLine, 4)
-            table.insert(Library.ThemeObjects.TabLabels, {Label = TabLabel, Btn = TabBtn})
+            ApplyIcon(TabIcon, IconRef)
+        end
+        table.insert(Library.ThemeObjects.TabLabels, {Label = TabLabel, Btn = TabBtn, Icon = TabIcon})
+
+        if CompactSidebar then
+            AttachTooltip(TabBtn, TabName)
         end
 
         local hoverTweenTab, leaveTweenTab
         TabBtn.MouseEnter:Connect(function()
             if ActiveTab and ActiveTab.Btn ~= TabBtn then
                 if leaveTweenTab then leaveTweenTab:Cancel() end
-                hoverTweenTab = TS:Create(TabBtn, TweenInfo.new(0.2), {BackgroundTransparency = 0.8})
+                hoverTweenTab = TS:Create(TabBtn, TweenInfo.new(0.2), {BackgroundTransparency = 0.6})
                 hoverTweenTab:Play()
+                if TabIcon then TS:Create(TabIcon, TweenInfo.new(0.2), {ImageTransparency = 0.15}):Play() end
             end
         end)
         TabBtn.MouseLeave:Connect(function()
@@ -2015,6 +2583,7 @@ function Library:CreateWindow(Settings)
                 if hoverTweenTab then hoverTweenTab:Cancel() end
                 leaveTweenTab = TS:Create(TabBtn, TweenInfo.new(0.2), {BackgroundTransparency = 1})
                 leaveTweenTab:Play()
+                if TabIcon then TS:Create(TabIcon, TweenInfo.new(0.2), {ImageTransparency = 0.45}):Play() end
             end
         end)
 
@@ -2030,9 +2599,11 @@ function Library:CreateWindow(Settings)
             ZIndex = 6
         })
         
+        table.insert(AllTabs, {Name = TabName, Page = Page})
         local LeftCol, RightCol
         if Two_Column then
             local ColumnsHolder = Create("Frame", {
+                Name = "ColumnsHolder",
                 Parent = Page,
                 Size = UDim2.fromScale(1, 0),
                 AutomaticSize = Enum.AutomaticSize.Y,
@@ -2111,41 +2682,47 @@ function Library:CreateWindow(Settings)
 
         local function Activate()
             if ActiveTab and ActiveTab.Btn == TabBtn then
+                if SearchState then
+                    SearchInput.Text = ""
+                    SearchQuery = ""
+                    ApplySearch()
+                end
                 return
             end
-            
+
             local OldTab = ActiveTab
             local Direction = (OldTab and MyIndex > OldTab.Index) and "Down" or "Up"
-            ActiveTab = {Btn = TabBtn, Page = Page, Index = MyIndex}
-            
-            for _, v in pairs(TabContainer:GetChildren()) do 
-                if v:IsA("TextButton") then 
-                    TS:Create(v, TweenInfo.new(0.3), {BackgroundTransparency = 1}):Play()
+            ActiveTab = {Btn = TabBtn, Page = Page, Index = MyIndex, Name = TabName}
+
+            for _, v in pairs(TabContainer:GetChildren()) do
+                if v:IsA("TextButton") then
+                    TS:Create(v, TweenInfo.new(0.25), {BackgroundTransparency = 1}):Play()
                     local lbl = v:FindFirstChild("TabLabel")
-                    local line = v:FindFirstChild("ActiveLine")
                     local icon = v:FindFirstChild("TabIcon")
-                    
                     if lbl then
-                        local isIconTab = icon ~= nil
-                        TS:Create(lbl, TweenInfo.new(0.3), {TextColor3 = SelectedTheme.TextDark, Position = UDim2.new(0, isIconTab and 38 or 20, 0, 0)}):Play()
-                    end
-                    if line then
-                        TS:Create(line, TweenInfo.new(0.3), {Size = UDim2.new(0, 3, 0, 0)}):Play()
+                        TS:Create(lbl, TweenInfo.new(0.25), {TextColor3 = SelectedTheme.TextDark}):Play()
                     end
                     if icon then
-                        TS:Create(icon, TweenInfo.new(0.3), {ImageColor3 = SelectedTheme.TextDark}):Play()
+                        TS:Create(icon, TweenInfo.new(0.25), {ImageTransparency = 0.45}):Play()
                     end
-                end 
+                end
             end
 
-            TS:Create(TabBtn, TweenInfo.new(0.3), {BackgroundTransparency = 0.5}):Play()
-            TS:Create(TabLabel, TweenInfo.new(0.3), {TextColor3 = SelectedTheme.Text, Position = UDim2.new(0, HasIcon and 42 or 24, 0, 0)}):Play()
-            
-            if ActiveLine then
-                TS:Create(ActiveLine, TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {Size = UDim2.new(0, 3, 0, 18)}):Play()
+            -- Gizli "Settings" sekmesi acilinca disli butonu secili gorunur
+            local SelBtn = TabBtn
+            SettingsIsActive = (TabName == "Settings")
+            if SettingsIsActive and OpenSettingsBtn then
+                SelBtn = OpenSettingsBtn
             end
-            if TabIcon then
-                TS:Create(TabIcon, TweenInfo.new(0.3), {ImageColor3 = SelectedTheme.ElementAccent}):Play()
+
+            TS:Create(SelBtn, TweenInfo.new(0.25), {BackgroundTransparency = 0}):Play()
+            local SelLabel = SelBtn:FindFirstChild("TabLabel")
+            local SelIcon = SelBtn:FindFirstChild("TabIcon")
+            if SelLabel then
+                TS:Create(SelLabel, TweenInfo.new(0.25), {TextColor3 = SelectedTheme.Text}):Play()
+            end
+            if SelIcon then
+                TS:Create(SelIcon, TweenInfo.new(0.25), {ImageTransparency = 0}):Play()
             end
 
             if OldTab then
@@ -2158,11 +2735,18 @@ function Library:CreateWindow(Settings)
                     end
                 end)
             end
-            
+
             Page.Visible = true
             Page.Position = (Direction == "Down") and UDim2.new(0, 0, 1, 0) or (Direction == "Up" and UDim2.new(0, 0, -1, 0) or UDim2.new(0, 0, 0, 0))
             if Direction ~= "None" then
                 TS:Create(Page, TweenInfo.new(0.4, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {Position = UDim2.new(0, 0, 0, 0)}):Play()
+            end
+
+            -- Arama acikken sekmeye tiklanirsa arama temizlenir ve o sekme acilir
+            if SearchQuery ~= "" or SearchState then
+                SearchInput.Text = ""
+                SearchQuery = ""
+                ApplySearch()
             end
         end
         
@@ -2206,6 +2790,89 @@ function Library:CreateWindow(Settings)
                     ThemeTag = "Text"
                 })
                 Create("UIPadding", { Parent = Lab, PaddingLeft = UDim.new(0, 6) })
+            end
+
+            -- Ayirici: ----- Yazi -----  (Astra/Obsidian tarzi)
+            function Elements:CreateDivider(Text)
+                ElementOrder = ElementOrder + 1
+                if type(Text) == "table" then Text = Text.Text or Text.Name end
+                local Holder = Create("Frame", {
+                    Parent = TargetParent,
+                    Size = UDim2.new(1, 0, 0, (Text and Text ~= "") and 18 or 8),
+                    BackgroundTransparency = 1,
+                    LayoutOrder = ElementOrder,
+                    ZIndex = 7
+                })
+                local LineColor = Library.Style and Library.Style.Outline or Color3.fromRGB(40, 40, 40)
+                local LineL = Create("Frame", {
+                    Parent = Holder,
+                    AnchorPoint = Vector2.new(0, 0.5),
+                    Position = UDim2.new(0, 2, 0.5, 0),
+                    Size = UDim2.new(1, -4, 0, 1),
+                    BackgroundColor3 = Color3.fromRGB(70, 70, 70),
+                    BackgroundTransparency = 0.3,
+                    BorderSizePixel = 0,
+                    ZIndex = 8
+                })
+                if not Text or Text == "" then
+                    return Holder
+                end
+                local LineR = Create("Frame", {
+                    Parent = Holder,
+                    AnchorPoint = Vector2.new(1, 0.5),
+                    Position = UDim2.new(1, -2, 0.5, 0),
+                    Size = UDim2.new(0.5, -40, 0, 1),
+                    BackgroundColor3 = Color3.fromRGB(70, 70, 70),
+                    BackgroundTransparency = 0.3,
+                    BorderSizePixel = 0,
+                    ZIndex = 8
+                })
+                local Lbl = Create("TextLabel", {
+                    Parent = Holder,
+                    AnchorPoint = Vector2.new(0.5, 0.5),
+                    Position = UDim2.fromScale(0.5, 0.5),
+                    Size = UDim2.new(0, 0, 1, 0),
+                    AutomaticSize = Enum.AutomaticSize.X,
+                    BackgroundTransparency = 1,
+                    Text = tostring(Text),
+                    Font = Library.GlobalFont,
+                    TextColor3 = SelectedTheme.TextDark,
+                    TextSize = 12,
+                    ZIndex = 8,
+                    ThemeTag = "TextDark"
+                })
+                local function Relayout()
+                    local w = Lbl.AbsoluteSize.X
+                    if w <= 0 then w = (#Lbl.Text * 7) end
+                    LineL.Size = UDim2.new(0.5, -(w / 2 + 8), 0, 1)
+                    LineR.Size = UDim2.new(0.5, -(w / 2 + 8), 0, 1)
+                end
+                Lbl:GetPropertyChangedSignal("AbsoluteSize"):Connect(Relayout)
+                Relayout()
+                return Holder, Lbl
+            end
+
+            -- Bos/ozel kutu: hub icinde ozel icerik (orn. 3D karakter) koymak icin
+            -- Cfg: Height (px), Transparent (bool)
+            function Elements:CreateCustom(Cfg)
+                ElementOrder = ElementOrder + 1
+                Cfg = Cfg or {}
+                local Frame = Create("Frame", {
+                    Parent = TargetParent,
+                    Size = UDim2.new(1, 0, 0, Cfg.Height or 120),
+                    BackgroundColor3 = SelectedTheme.Second,
+                    BackgroundTransparency = Cfg.Transparent and 1 or 0.5,
+                    BorderSizePixel = 0,
+                    LayoutOrder = ElementOrder,
+                    ZIndex = 7,
+                    ClipsDescendants = true,
+                    ThemeTag = "Second"
+                })
+                AddCorner(Frame, 8)
+                if not Cfg.Transparent then
+                    AddStroke(Frame, SelectedTheme).Transparency = 0.8
+                end
+                return Frame
             end
 
                 function Elements:CreateLabel(Cfg)
@@ -2293,6 +2960,7 @@ function Library:CreateWindow(Settings)
 
             function Elements:CreateButton(Cfg)
                 ElementOrder = ElementOrder + 1
+                Cfg = Cfg or {}
                 local Btn = Create("TextButton", {
                     Parent = TargetParent,
                     Size = UDim2.new(1, 0, 0, 34),
@@ -2307,12 +2975,13 @@ function Library:CreateWindow(Settings)
                 AddCorner(Btn, 8)
                 AddStroke(Btn, SelectedTheme).Transparency = 0.8
 
-                Create("TextLabel", {
+                local BaseText = Cfg.Name or "Button"
+                local BtnLabel = Create("TextLabel", {
                     Parent = Btn,
                     Size = UDim2.new(1, -20, 1, 0),
                     Position = UDim2.new(0, 10, 0, 0),
                     BackgroundTransparency = 1,
-                    Text = Cfg.Name or "Button",
+                    Text = BaseText,
                     Font = Library.GlobalFontBold,
                     TextColor3 = SelectedTheme.Text,
                     TextSize = 14,
@@ -2324,15 +2993,61 @@ function Library:CreateWindow(Settings)
                 
                 CreateRipple(Btn, SelectedTheme.Accent)
                 DefaultHover(Btn)
+
+                -- DoubleClick = true -> ilk tiklamada "Are you sure?" sorar, 2 sn icinde tekrar tiklanirsa calisir
+                local Confirming = 0
+                local ButtonObj = {Instance = Btn, Label = BtnLabel}
+
+                function ButtonObj:SetText(t)
+                    BaseText = tostring(t)
+                    if Confirming == 0 then
+                        BtnLabel.Text = BaseText
+                    end
+                end
+
+                function ButtonObj:GetText()
+                    return BaseText
+                end
                 
                 Btn.MouseButton1Click:Connect(function()
                     TS:Create(Btn, TweenInfo.new(0.1), {Size = UDim2.new(1, -4, 0, 30), Position = UDim2.new(0, 2, 0, 2)}):Play()
-                    task.wait(0.1)
-                    TS:Create(Btn, TweenInfo.new(0.1), {Size = UDim2.new(1, 0, 0, 34), Position = UDim2.new(0, 0, 0, 0)}):Play()
+                    task.delay(0.1, function()
+                        TS:Create(Btn, TweenInfo.new(0.1), {Size = UDim2.new(1, 0, 0, 34), Position = UDim2.new(0, 0, 0, 0)}):Play()
+                    end)
+
+                    local NeedConfirm = Cfg.DoubleClick
+                    if type(NeedConfirm) == "function" then
+                        local ok, res = pcall(NeedConfirm)
+                        NeedConfirm = ok and res
+                    end
+
+                    if NeedConfirm and Confirming == 0 then
+                        local token = os.clock()
+                        Confirming = token
+                        BtnLabel.Text = Cfg.ConfirmText or "Are you sure?"
+                        BtnLabel.TextColor3 = SelectedTheme.ElementAccent
+                        task.delay(2, function()
+                            if Confirming == token then
+                                Confirming = 0
+                                BtnLabel.Text = BaseText
+                                BtnLabel.TextColor3 = SelectedTheme.Text
+                            end
+                        end)
+                        return
+                    end
+
+                    if Confirming ~= 0 then
+                        Confirming = 0
+                        BtnLabel.Text = BaseText
+                        BtnLabel.TextColor3 = SelectedTheme.Text
+                    end
+
                     if Cfg.Callback then
-                        Cfg.Callback()
+                        task.spawn(Cfg.Callback)
                     end
                 end)
+
+                return ButtonObj
             end
 
             function Elements:CreateToggle(Cfg)
@@ -2446,6 +3161,13 @@ function Library:CreateWindow(Settings)
                 local Val = Cfg.Default or Cfg.Min
                 local Flag = Cfg.Flag or Cfg.Name
                 Library.Flags[Flag] = Val
+                -- Rounding (opsiyonel): ondalikli slider. Verilmezse eski davranis (tam sayi).
+                local Rounding = math.max(0, math.floor(tonumber(Cfg.Rounding) or 0))
+                local function RoundVal(v)
+                    if Rounding <= 0 then return v end
+                    local m = 10 ^ Rounding
+                    return math.floor(v * m + 0.5) / m
+                end
                 
                 local Frame = Create("Frame", {
                     Parent = TargetParent,
@@ -2558,7 +3280,11 @@ function Library:CreateWindow(Settings)
                 
                 local function DragUpdate(input)
                     local p = math.clamp((input.Position.X - SlideBar.AbsolutePosition.X) / SlideBar.AbsoluteSize.X, 0, 1)
-                    Update(math.floor(Min + ((Max - Min) * p)))
+                    if Rounding > 0 then
+                        Update(RoundVal(Min + ((Max - Min) * p)))
+                    else
+                        Update(math.floor(Min + ((Max - Min) * p)))
+                    end
                 end
                 
                 SlideBar.InputBegan:Connect(function(i)
@@ -2585,7 +3311,7 @@ function Library:CreateWindow(Settings)
                 ValLbl.FocusLost:Connect(function()
                     local number = tonumber(ValLbl.Text)
                     if number then
-                        Update(number)
+                        Update(RoundVal(number))
                     else
                         ValLbl.Text = tostring(Val)
                     end
@@ -2703,6 +3429,32 @@ function Elements:CreateDropdown(Cfg)
                 local Selected = Cfg.Default
                 local Options = Cfg.Items or {}
                 local PlayerIcons = Cfg.PlayerIcons == true -- Oyuncu profil desteği
+                -- Multi (opsiyonel): coklu secim. Selected = {[item] = true}
+                local Multi = Cfg.Multi == true
+                local function MultiCopy(src)
+                    local out = {}
+                    if type(src) == "table" then
+                        for k, v in pairs(src) do
+                            if type(k) == "number" and type(v) ~= "boolean" then
+                                out[v] = true
+                            elseif v then
+                                out[k] = true
+                            end
+                        end
+                    end
+                    return out
+                end
+                local function MultiText()
+                    local names = {}
+                    for _, it in ipairs(Options) do
+                        if Selected[it] then names[#names + 1] = tostring(it) end
+                    end
+                    if #names == 0 then return Cfg.Name or "Dropdown" end
+                    return (Cfg.Name or "Dropdown") .. " - " .. table.concat(names, ", ")
+                end
+                if Multi then
+                    Selected = MultiCopy(Cfg.Default)
+                end
                 
                 local Drop = Create("TextButton", {
                     Parent = TargetParent,
@@ -2726,7 +3478,7 @@ function Elements:CreateDropdown(Cfg)
                     Size = UDim2.new(1, -40, 0, 34),
                     Position = UDim2.new(0, 12, 0, 0),
                     BackgroundTransparency = 1,
-                    Text = (Cfg.Name or "Dropdown") .. (Selected and " - " .. tostring(Selected) or ""),
+                    Text = Multi and (Cfg.Name or "Dropdown") or ((Cfg.Name or "Dropdown") .. (Selected and " - " .. tostring(Selected) or "")),
                     Font = Library.GlobalFont,
                     TextColor3 = SelectedTheme.Text,
                     TextSize = 14,
@@ -2769,7 +3521,31 @@ function Elements:CreateDropdown(Cfg)
                 
                 local ListLayout = Create("UIListLayout", { Parent = Container, Padding = UDim.new(0, 4) })
                 
+                local MultiButtons = {}
+                local function PaintMulti()
+                    for it, rec in pairs(MultiButtons) do
+                        if rec.Btn.Parent then
+                            local on = Selected[it] == true
+                            rec.Btn.BackgroundTransparency = on and 0.45 or 0.8
+                            local col = on and SelectedTheme.ElementAccent or SelectedTheme.TextDark
+                            rec.Btn.TextColor3 = col
+                            if rec.Label then rec.Label.TextColor3 = col end
+                        end
+                    end
+                end
+
                 local function Update(val) 
+                    if Multi then
+                        Selected = MultiCopy(val)
+                        Title.Text = MultiText()
+                        PaintMulti()
+                        local out = MultiCopy(Selected)
+                        Library.Flags[Flag] = out
+                        if Cfg.Callback then
+                            Cfg.Callback(MultiCopy(Selected))
+                        end
+                        return
+                    end
                     Selected = val 
                     Title.Text = (Cfg.Name or "Dropdown") .. " - " .. tostring(Selected) 
                     if Cfg.Callback then
@@ -2787,6 +3563,18 @@ function Elements:CreateDropdown(Cfg)
                     end
                     
                     local found = false
+                    local multiPruned = false
+                    if Multi then
+                        table.clear(MultiButtons)
+                        local valid = {}
+                        for _, v in pairs(Options) do valid[v] = true end
+                        for k in pairs(Selected) do
+                            if not valid[k] then
+                                Selected[k] = nil
+                                multiPruned = true
+                            end
+                        end
+                    end
                     for _, v in pairs(Options) do
                         if v == Selected then
                             found = true
@@ -2794,7 +3582,9 @@ function Elements:CreateDropdown(Cfg)
                         end
                     end
                     
-                    if found then
+                    if Multi then
+                        Title.Text = MultiText()
+                    elseif found then
                         Title.Text = (Cfg.Name or "Dropdown") .. " - " .. tostring(Selected)
                     else
                         Selected = nil
@@ -2870,6 +3660,9 @@ function Elements:CreateDropdown(Cfg)
                         end
 
                         local hoverTweenBtn, leaveTweenBtn
+                        if Multi then
+                            MultiButtons[item] = {Btn = Btn, Label = ItemLabel}
+                        end
                         Btn.MouseEnter:Connect(function()
                             if leaveTweenBtn then leaveTweenBtn:Cancel() end
                             hoverTweenBtn = TS:Create(Btn, TweenInfo.new(0.2), {BackgroundTransparency = 0.2, TextColor3 = SelectedTheme.Text})
@@ -2880,6 +3673,14 @@ function Elements:CreateDropdown(Cfg)
                         end)
                         Btn.MouseLeave:Connect(function()
                             if hoverTweenBtn then hoverTweenBtn:Cancel() end
+                            if Multi and Selected[item] then
+                                leaveTweenBtn = TS:Create(Btn, TweenInfo.new(0.2), {BackgroundTransparency = 0.45, TextColor3 = SelectedTheme.ElementAccent})
+                                leaveTweenBtn:Play()
+                                if ItemLabel then
+                                    ItemLabel.TextColor3 = SelectedTheme.ElementAccent
+                                end
+                                return
+                            end
                             leaveTweenBtn = TS:Create(Btn, TweenInfo.new(0.2), {BackgroundTransparency = 0.8, TextColor3 = SelectedTheme.TextDark})
                             leaveTweenBtn:Play()
                             if ItemLabel then
@@ -2887,6 +3688,14 @@ function Elements:CreateDropdown(Cfg)
                             end
                         end)
                         Btn.MouseButton1Click:Connect(function()
+                            if Multi then
+                                if hoverTweenBtn then hoverTweenBtn:Cancel() end
+                                if leaveTweenBtn then leaveTweenBtn:Cancel() end
+                                local nextSel = MultiCopy(Selected)
+                                if nextSel[item] then nextSel[item] = nil else nextSel[item] = true end
+                                Update(nextSel)
+                                return
+                            end
                             Update(item)
                             Expanded = false
                             TS:Create(Drop, TweenInfo.new(0.4, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {Size = UDim2.new(1, 0, 0, 34)}):Play()
@@ -2895,6 +3704,15 @@ function Elements:CreateDropdown(Cfg)
                     end
                     local stepH = PlayerIcons and 34 or 32
                     Container.CanvasSize = UDim2.new(0, 0, 0, #Options * stepH + 10)
+                    if Multi then
+                        PaintMulti()
+                        if multiPruned then
+                            Library.Flags[Flag] = MultiCopy(Selected)
+                            if Cfg.Callback then
+                                task.spawn(Cfg.Callback, MultiCopy(Selected))
+                            end
+                        end
+                    end
                 end
                 
                 RefreshList(Options)
@@ -2918,7 +3736,7 @@ function Elements:CreateDropdown(Cfg)
                 Library.Items[Flag] = {
                     Set = Update,
                     Refresh = function(self, list) RefreshList(list) end,
-                    Get = function() return Selected end
+                    Get = function() if Multi then return MultiCopy(Selected) end return Selected end
                 }
                 
                 return Library.Items[Flag]
@@ -3315,79 +4133,117 @@ function Elements:CreateDropdown(Cfg)
 
         if Two_Column then
             function TabElements:CreateBlock(BlockCfg)
+                BlockCfg = BlockCfg or {}
                 local BlockName = BlockCfg.Name or "Block"
                 local Side = BlockCfg.Side or "Left"
                 local TargetColumn = (Side == "Right" and RightCol) or LeftCol
-                
+                local HEADER_H = 34
+
+                BlockSeq = BlockSeq + 1
                 local BlockFrame = Create("Frame", {
+                    Name = "Block",
                     Parent = TargetColumn,
+                    LayoutOrder = BlockSeq,
                     Size = UDim2.new(1, 0, 0, 0),
                     AutomaticSize = Enum.AutomaticSize.Y,
-                    BackgroundColor3 = SelectedTheme.Second,
-                    BackgroundTransparency = 0.5,
-                    ZIndex = 5,
-                    ThemeTag = "Second"
-                })
-                AddCorner(BlockFrame, 8)
-
-                local BlockStroke = Create("UIStroke", { Parent = BlockFrame, Color = Color3.new(1, 1, 1), Transparency = 0.7, Thickness = 1 })
-                local BlockGrad = Create("UIGradient", { Parent = BlockStroke, Color = SelectedTheme.Gradient })
-                table.insert(Library.GradientObjects, BlockGrad)
-                
-                Create("Frame", {
-                    Parent = BlockFrame,
-                    Size = UDim2.new(1, -24, 0, 1),
-                    Position = UDim2.new(0, 12, 0, 36),
-                    BackgroundColor3 = SelectedTheme.TextDark,
-                    BackgroundTransparency = 0.8,
+                    BackgroundColor3 = Style.Panel,
+                    BackgroundTransparency = 0,
                     BorderSizePixel = 0,
-                    ZIndex = 6,
-                    ThemeTag = "TextDark"
+                    ZIndex = 5
                 })
-                
-                local HasIcon = (BlockCfg.ImageID ~= nil and BlockCfg.ImageID ~= "")
-                local TitleOffsetX = 12
-                
-                if HasIcon then
-                    local BlockIcon = Create("ImageLabel", {
-                        Parent = BlockFrame,
-                        Size = UDim2.new(0, 18, 0, 18),
-                        Position = UDim2.new(0, 12, 0, 9),
-                        BackgroundTransparency = 1,
-                        ImageColor3 = SelectedTheme.TextDark,
-                        ZIndex = 6
-                    })
-                    SetImageAsync(BlockIcon, "Image", BlockCfg.ImageID)
-                    TitleOffsetX = 36
-                    table.insert(Library.ThemeObjects.TextDark, BlockIcon)
-                end
-                
-                Create("TextLabel", {
+                AddCorner(BlockFrame, 9)
+                Create("UIStroke", {
                     Parent = BlockFrame,
-                    Size = UDim2.new(1, -TitleOffsetX - 12, 0, 36),
-                    Position = UDim2.new(0, TitleOffsetX, 0, 0),
+                    Color = Style.Outline,
+                    Thickness = 1,
+                    ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+                })
+
+                -- Baslik (tiklayinca blok kapanir/acilir)
+                local Header = Create("TextButton", {
+                    Name = "BlockHeader",
+                    Parent = BlockFrame,
+                    Size = UDim2.new(1, 0, 0, HEADER_H),
+                    BackgroundTransparency = 1,
+                    Text = "",
+                    AutoButtonColor = false,
+                    ZIndex = 6
+                })
+
+                local BlockIcon = Create("ImageLabel", {
+                    Name = "BlockIcon",
+                    Parent = Header,
+                    Size = UDim2.fromOffset(18, 18),
+                    AnchorPoint = Vector2.new(0, 0.5),
+                    Position = UDim2.new(0, 10, 0.5, 0),
+                    BackgroundTransparency = 1,
+                    ImageColor3 = SelectedTheme.ElementAccent,
+                    ZIndex = 7,
+                    ThemeTag = "ElementAccent"
+                })
+                ApplyIcon(BlockIcon, BlockCfg.ImageID or BlockCfg.Icon or TabIconRef or "star")
+
+                Create("TextLabel", {
+                    Name = "BlockTitle",
+                    Parent = Header,
+                    Size = UDim2.new(1, -70, 1, 0),
+                    Position = UDim2.new(0, 36, 0, 0),
                     BackgroundTransparency = 1,
                     Text = BlockName,
-                    Font = Library.GlobalFontBold,
+                    Font = Library.GlobalFont,
                     TextColor3 = SelectedTheme.Text,
                     TextSize = 14,
                     TextXAlignment = Enum.TextXAlignment.Left,
-                    ZIndex = 6,
+                    TextTruncate = Enum.TextTruncate.AtEnd,
+                    ZIndex = 7,
                     ThemeTag = "Text"
                 })
-                
+
+                local Chevron = Create("ImageLabel", {
+                    Name = "Chevron",
+                    Parent = Header,
+                    Size = UDim2.fromOffset(16, 16),
+                    AnchorPoint = Vector2.new(0.5, 0.5),
+                    Position = UDim2.new(1, -18, 0.5, 0),
+                    BackgroundTransparency = 1,
+                    ImageColor3 = SelectedTheme.Text,
+                    ZIndex = 7
+                })
+                ApplyIcon(Chevron, "chevron-down")
+
+                local Sep = Create("Frame", {
+                    Name = "BlockSep",
+                    Parent = BlockFrame,
+                    Size = UDim2.new(1, 0, 0, 1),
+                    Position = UDim2.new(0, 0, 0, HEADER_H),
+                    BackgroundColor3 = Style.Outline,
+                    BorderSizePixel = 0,
+                    ZIndex = 6
+                })
+
                 local BlockContent = Create("Frame", {
+                    Name = "BlockContent",
                     Parent = BlockFrame,
                     Size = UDim2.new(1, 0, 0, 0),
-                    Position = UDim2.new(0, 0, 0, 42),
+                    Position = UDim2.new(0, 0, 0, HEADER_H + 1),
                     AutomaticSize = Enum.AutomaticSize.Y,
                     BackgroundTransparency = 1,
                     ZIndex = 5
                 })
-                
+
                 Create("UIListLayout", { Parent = BlockContent, SortOrder = Enum.SortOrder.LayoutOrder, Padding = UDim.new(0, 6) })
-                Create("UIPadding", { Parent = BlockContent, PaddingTop = UDim.new(0, 2), PaddingBottom = UDim.new(0, 10), PaddingLeft = UDim.new(0, 8), PaddingRight = UDim.new(0, 8) })
-                
+                Create("UIPadding", { Parent = BlockContent, PaddingTop = UDim.new(0, 8), PaddingBottom = UDim.new(0, 10), PaddingLeft = UDim.new(0, 8), PaddingRight = UDim.new(0, 8) })
+
+                local Collapsed = false
+                BlockFrame:SetAttribute("Collapsed", false)
+                Header.MouseButton1Click:Connect(function()
+                    Collapsed = not Collapsed
+                    BlockFrame:SetAttribute("Collapsed", Collapsed)
+                    BlockContent.Visible = not Collapsed
+                    Sep.Visible = not Collapsed
+                    TS:Create(Chevron, TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {Rotation = Collapsed and -90 or 0}):Play()
+                end)
+
                 return GetElements(BlockContent)
             end
         end
